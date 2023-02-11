@@ -19,7 +19,12 @@ def apply_binarization(img: np.ndarray, threshold: int, threshold_type: int = cv
     Returns:
         numpy.ndarray: The binarized image.
     """
-    logger.info(f'Applying binarization with threshold {threshold} and threshold type {threshold_type}')
+    if img is None:
+        return None
+
+    logger.info(
+        f'Applying binarization with threshold {threshold} and threshold type {threshold_type}'
+    )
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     return cv2.threshold(img, threshold, 255, threshold_type)[1]
 
@@ -27,12 +32,19 @@ def apply_binarization(img: np.ndarray, threshold: int, threshold_type: int = cv
 if __name__ == '__main__':
     threshold_types = [cv2.THRESH_BINARY, cv2.THRESH_BINARY_INV,
                        cv2.THRESH_TRUNC, cv2.THRESH_TOZERO, cv2.THRESH_TOZERO_INV]
-    image_path = os.path.join('images', 'paisagem01.jpg')
+    image_path = os.path.abspath(os.path.join('images', 'paisagem01.jpg'))
     threshold = 140
 
     os.makedirs('results', exist_ok=True)
 
-    img = cv2.imread(image_path)
+    with open(image_path, 'rb') as f:
+        image_content = f.read()
+    img = cv2.imdecode(
+        np.frombuffer(
+            image_content,
+            np.uint8
+        ), cv2.IMREAD_UNCHANGED
+    )
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     cv2.imwrite('results/original.png', img)
