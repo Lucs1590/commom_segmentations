@@ -30,32 +30,25 @@ def apply_otsu(img: np.ndarray) -> np.ndarray:
 
 if __name__ == '__main__':
     image_path = os.path.abspath(os.path.join('images', 'paisagem01.jpg'))
-    os.makedirs('results', exist_ok=True)
+    results_dir = 'results'
+    os.makedirs(results_dir, exist_ok=True)
 
     with open(image_path, 'rb') as f:
         image_content = f.read()
-    img = cv2.imdecode(
-        np.frombuffer(
-            image_content,
-            np.uint8
-        ), cv2.IMREAD_UNCHANGED
-    )
+    img = cv2.imdecode(np.frombuffer(image_content, np.uint8), cv2.IMREAD_UNCHANGED)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-    cv2.imwrite('results/original.png', img)
 
-    threshold, img_image = apply_otsu(img)
+    cv2.imwrite(os.path.join(results_dir, 'original.png'), img)
+
+    threshold, binarized_img = apply_otsu(img)
     logger.info(f'Threshold: {threshold}')
-    cv2.imwrite('results/otsu.png', img)
+    cv2.imwrite(os.path.join(results_dir, 'otsu.png'), binarized_img)
 
-
-    histogram, bins = np.histogram(
-        gray,
-        256,
-        [0, 256]
-    )
+    histogram, bins = np.histogram(gray, 256, [0, 256])
     plt.plot(histogram)
-    plt.savefig('results/histogram.png')
+    plt.savefig(os.path.join(results_dir, 'histogram.png'))
 
     plt.hist(gray.ravel(), 256, [0, 256])
-    plt.savefig('results/histogram2.png')
+    plt.savefig(os.path.join(results_dir, 'histogram2.png'))
+
