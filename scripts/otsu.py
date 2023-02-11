@@ -29,7 +29,7 @@ def apply_otsu(img: np.ndarray) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    image_path = os.path.abspath(os.path.join('images', 'paisagem01.jpg'))
+    image_path = os.path.abspath(os.path.join('images', 'folha_ruido.jpg'))
     results_dir = 'results'
     os.makedirs(results_dir, exist_ok=True)
 
@@ -48,7 +48,9 @@ if __name__ == '__main__':
     histogram, bins = np.histogram(gray, 256, [0, 256])
     plt.plot(histogram)
     plt.savefig(os.path.join(results_dir, 'histogram.png'))
+    plt.clf()
 
     plt.hist(gray.ravel(), 256, [0, 256])
     plt.savefig(os.path.join(results_dir, 'histogram2.png'))
+    plt.clf()
 
