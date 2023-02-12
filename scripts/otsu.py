@@ -28,7 +28,7 @@ def apply_otsu(img: np.ndarray, convert_to_gray: bool = True) -> Union[np.ndarra
     if convert_to_gray:
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    return cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    return cv2.threshold(img, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
 
 
 if __name__ == '__main__':
