@@ -7,10 +7,6 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-
-
-
 if __name__ == '__main__':
     image_path = os.path.abspath(os.path.join('images', 'moedas02.jpg'))
     results_dir = 'results'
