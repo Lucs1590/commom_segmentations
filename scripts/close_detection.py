@@ -42,3 +42,7 @@ if __name__ == '__main__':
     cv2.drawContours(mask, contours, -1, (255, 255, 255), thickness=cv2.FILLED)
     mask = cv2.erode(mask, np.ones((3, 3), np.uint8), iterations=2)
     cv2.imwrite(os.path.join(results_dir, 'filled_contours.png'), mask)
+
+    logger.info('Applying bitwise_and')
+    result = cv2.bitwise_and(img, img, mask=mask)
+    cv2.imwrite(os.path.join(results_dir, 'bitwise_and_close.png'), result)
