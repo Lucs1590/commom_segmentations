@@ -54,7 +54,7 @@ def segment_back_foward_ground(img: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: Segmented image.
     """
-    img_flat = flatten_image(gray).copy()
+    img_flat = flatten_image(img.copy())
     mean = img_flat.mean()
 
     num_pixels = len(img_flat)
@@ -80,28 +80,23 @@ def segment_image_regions(input_image: np.ndarray, num_regions: int = 3) -> np.n
     Returns:
         np.ndarray: Segmented image.
     """
-    flat_img = flatten_image(input_image).copy()
+    flat_img = flatten_image(input_image.copy())
 
     ranges = np.linspace(0, 1, num_regions + 1)
     ranges = ranges[:-1]
-    values = [i for i in range(num_regions)]
+    values = list(map(int, np.linspace(0, 255, num_regions)))
 
     num_pixels = len(flat_img)
 
     logger.info('Making segmentation based on mean threshold')
     for i in range(num_pixels):
         for j in range(num_regions):
-            if flat_img[i] >= ranges[j] or flat_img[i] < ranges[j + 1]:
+            if j == num_regions - 1:
                 flat_img[i] = values[j]
                 break
-            elif flat_img[i] == 1:
-                flat_img[i] = values[-1]
+            if flat_img[i] >= ranges[j] and flat_img[i] < ranges[j+1]:
+                flat_img[i] = values[j]
                 break
-            elif flat_img[i] == 0:
-                flat_img[i] = values[0]
-                break
-            else:
-                continue
 
     img_segmented = flat_img.reshape(img.shape[0], img.shape[1])
     return img_segmented
@@ -123,7 +118,7 @@ if __name__ == '__main__':
     )
 
     logger.info('Saving segmented image with regions')
-    segmented_img_regions = segment_image_regions(gray, 5)
+    segmented_img_regions = segment_image_regions(gray, 3)
     cv2.imwrite(
         os.path.join(results_dir, 'segmented_regions.png'),
         segmented_img_regions
