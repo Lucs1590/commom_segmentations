@@ -109,6 +109,6 @@ if __name__ == '__main__':
     plt.imshow(labels)
     fig = plt.gcf()
     fig.set_size_inches(18.5, 10.5)
-    plot = plt.imshow(labels)
+    plot = plt.imshow(labels, cmap='jet')
     plt.colorbar(plot)
     plt.savefig(os.path.join(results_dir, 'labels_watershed.png'))
