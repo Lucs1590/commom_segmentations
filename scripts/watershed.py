@@ -88,6 +88,7 @@ def apply_id_and_label(results_dir, gray, labels, labeled_image):
             labeled_image
         )
 
+
 def apply_overlay(results_dir, img, labels):
     normalize = plt.Normalize(labels.min(), labels.max())
     seg_watershed = plt.cm.jet(normalize(labels))
@@ -98,6 +99,7 @@ def apply_overlay(results_dir, img, labels):
     overlay = cv2.addWeighted(img, 0.5, seg_watershed, 0.5, 0)
     cv2.imwrite(os.path.join(results_dir, 'overlay_watershed.png'), overlay)
     return overlay
+
 
 if __name__ == '__main__':
     results_dir = 'results'
