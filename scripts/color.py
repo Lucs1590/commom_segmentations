@@ -37,8 +37,10 @@ def read_image(image_path: str, results_dir: str) -> np.ndarray:
 def apply_rgb_segmentation(img, results_dir):
     logger.info('RGB segmentation')
 
-    min_color = np.array([90, 10, 0], dtype=np.uint8)
-    max_color = np.array([255, 180, 40], dtype=np.uint8)
+    min_color = np.array([0, 20, 20], dtype=np.uint8)
+    max_color = np.array([90, 255, 255], dtype=np.uint8)
+    # min_color = np.array([90, 10, 0], dtype=np.uint8)
+    # max_color = np.array([255, 180, 40], dtype=np.uint8)
     mask = cv2.inRange(img, min_color, max_color)
     cv2.imwrite(os.path.join(results_dir, 'mask_rgb.png'), mask)
 
@@ -97,13 +99,17 @@ def apply_rgb_segmentation(img, results_dir):
     axis.set_zlabel("Blue")
     plt.savefig(os.path.join(results_dir, 'color_histogram_rgb.png'))
 
+    return img
+
 
 def apply_hsv_segmentation(img, results_dir):
     logger.info('HSV segmentation')
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    min_color = np.array([45, 80, 40], dtype=np.uint8)
-    max_color = np.array([75, 255, 255], dtype=np.uint8)
+    min_color = np.array([0, 20, 20], dtype=np.uint8)
+    max_color = np.array([30, 255, 255], dtype=np.uint8)
+    # min_color = np.array([45, 80, 40], dtype=np.uint8)
+    # max_color = np.array([75, 255, 255], dtype=np.uint8)
     mask = cv2.inRange(hsv, min_color, max_color)
     cv2.imwrite(os.path.join(results_dir, 'mask_hsv.png'), mask)
 
@@ -136,6 +142,8 @@ def apply_hsv_segmentation(img, results_dir):
     axis.set_zlabel("Value")
     plt.savefig(os.path.join(results_dir, 'color_histogram_hsv.png'))
 
+    return img
+
 
 if __name__ == '__main__':
     results_dir = 'results'
@@ -144,5 +152,5 @@ if __name__ == '__main__':
     img = read_image(image_path, results_dir)
 
     logger.info('Segmenting image by color')
-    apply_hsv_segmentation(img, results_dir)
-    apply_rgb_segmentation(img, results_dir)
+    hsv_segmentation = apply_hsv_segmentation(img, results_dir)
+    rgb_segmentation = apply_rgb_segmentation(img, results_dir)
