@@ -35,25 +35,45 @@ def read_image(image_path: str, results_dir: str) -> np.ndarray:
     return img
 
 
-def euclidean_distance(p1: tuple, p2: tuple) -> float:
-    """Calculates the euclidean distance between two points.
+def fill_holes(image: np.ndarray, thresh=1000) -> np.ndarray:
+    """Fills holes in a binary image.
 
     Args:
-        p1 (tuple): First point.
-        p2 (tuple): Second point.
+        image (np.ndarray): Binary image.
 
     Returns:
-        float: Euclidean distance between the two points.
+        np.ndarray: Binary image with filled holes.
     """
-    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+    image = image.copy()
+    contours, _ = cv2.findContours(
+        image,
+        cv2.RETR_TREE,
+        cv2.CHAIN_APPROX_SIMPLE
+    )
+    holes = []
+
+    for contour in contours:
+        if cv2.contourArea(contour) < thresh:
+            holes.append(contour)
+
+    cv2.drawContours(image, holes, -1, 255, -1)
+
+    return image
 
 
 if __name__ == '__main__':
     results_dir = 'results'
-    image_path = os.path.abspath(os.path.join('images', 'moedas03.jpg'))
+    image_path = os.path.abspath(os.path.join('images', 'rbc.jpg'))
     logger.info(f'Reading image from {image_path}')
     img = read_image(image_path, results_dir)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    logger.info('Applying mean shift filter')
+    mean_filter = cv2.pyrMeanShiftFiltering(
+        img,
+        20,
+        40
+    )
 
     logger.info('Applying threshold')
     thresh_val, thresh = cv2.threshold(
@@ -64,8 +84,9 @@ if __name__ == '__main__':
     )
     logger.info('Threshold value: %s', str(thresh_val))
 
-    dilated = cv2.dilate(thresh, np.ones((3, 3), np.uint8), iterations=2)
-    segmented = cv2.erode(dilated, np.ones((3, 3), np.uint8), iterations=2)
+    # dilated = cv2.dilate(thresh, np.ones((3, 3), np.uint8), iterations=2)
+    # segmented = cv2.erode(dilated, np.ones((3, 3), np.uint8), iterations=2)
+    segmented = fill_holes(thresh)
     cv2.imwrite(os.path.join(results_dir, 'thresh.png'), segmented)
 
     logger.info('Applying watershed')
@@ -81,7 +102,7 @@ if __name__ == '__main__':
     )
     markers = ndi.label(local_max, structure=np.ones((3, 3)))[0]
     labels = watershed(-distance_map, markers, mask=segmented)
-    logger.info('Number of coins: %s', str(len(np.unique(labels)) - 1))
+    logger.info('Number of objects: %s', str(len(np.unique(labels)) - 1))
 
     logger.info('Saving results')
     plt.clf()
