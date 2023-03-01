@@ -7,6 +7,7 @@ import numpy as np
 from scipy import ndimage as ndi
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed
+from matplotlib import pyplot as plt
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -60,7 +61,33 @@ if __name__ == '__main__':
         0,
         255,
         cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU
-    )[1]
+    )
     logger.info('Threshold value: %s', str(thresh_val))
+
     dilated = cv2.dilate(thresh, np.ones((3, 3), np.uint8), iterations=2)
-    cv2.imwrite(os.path.join(results_dir, 'thresh_dilated.png'), dilated)
+    segmented = cv2.erode(dilated, np.ones((3, 3), np.uint8), iterations=2)
+    cv2.imwrite(os.path.join(results_dir, 'thresh.png'), segmented)
+
+    logger.info('Applying watershed')
+    distance_map = ndi.distance_transform_edt(segmented)
+    plt.imshow(distance_map)
+    plt.savefig(os.path.join(results_dir, 'distance_map.png'))
+
+    local_max = peak_local_max(
+        distance_map,
+        indices=False,
+        min_distance=20,
+        labels=segmented
+    )
+    markers = ndi.label(local_max, structure=np.ones((3, 3)))[0]
+    labels = watershed(-distance_map, markers, mask=segmented)
+    logger.info('Number of coins: %s', str(len(np.unique(labels)) - 1))
+
+    logger.info('Saving results')
+    plt.clf()
+    plt.imshow(labels)
+    fig = plt.gcf()
+    fig.set_size_inches(18.5, 10.5)
+    plot = plt.imshow(labels)
+    plt.colorbar(plot)
+    plt.savefig(os.path.join(results_dir, 'labels_watershed.png'))
