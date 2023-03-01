@@ -3,6 +3,7 @@ import logging
 
 import cv2
 import numpy as np
+import skimage.exposure
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm, colors
@@ -145,12 +146,66 @@ def apply_hsv_segmentation(img, results_dir):
     return img
 
 
+def apply_chroma_key(img, background_img, results_dir):
+    logger.info('Chroma key')
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+    min_color = np.array([40, 80, 40], dtype=np.uint8)
+    max_color = np.array([80, 255, 255], dtype=np.uint8)
+    mask = cv2.inRange(hsv, min_color, max_color)
+    cv2.imwrite(os.path.join(results_dir, 'mask_chroma_key.png'), mask)
+
+    mask = cv2.bitwise_not(mask)
+    cv2.imwrite(os.path.join(results_dir, 'mask_inv_chroma_key.png'), mask)
+
+    soft_mask = mask.copy()
+    soft_mask = cv2.GaussianBlur(
+        soft_mask,
+        (0, 0),
+        sigmaX=3,
+        sigmaY=3,
+        borderType=cv2.BORDER_DEFAULT
+    )
+    soft_mask = skimage.exposure.rescale_intensity(
+        soft_mask,
+        in_range=(150, 190),
+        out_range=(0, 255)
+    )
+    cv2.imwrite(
+        os.path.join(results_dir, 'soft_mask_chroma_key.png'),
+        soft_mask
+    )
+
+    segment = cv2.bitwise_and(img, img, mask=mask)
+    cv2.imwrite(os.path.join(results_dir, 'segment_chroma_key.png'), segment)
+
+    result_img = img.copy()
+
+    background = cv2.resize(background_img, (img.shape[1], img.shape[0]))
+    cv2.imwrite(
+        os.path.join(results_dir, 'background_chroma_key.png'),
+        background
+    )
+
+    result_img[soft_mask == 0] = background[soft_mask == 0]
+    cv2.imwrite(os.path.join(results_dir, 'result_chroma_key.png'), result_img)
+
+    return result_img
+
+
 if __name__ == '__main__':
     results_dir = 'results'
-    image_path = os.path.abspath(os.path.join('images', 'limao_amarelo.jpg'))
+    image_path = os.path.abspath(os.path.join('images', 'chromakey.jpg'))
     logger.info(f'Reading image from {image_path}')
     img = read_image(image_path, results_dir)
+    background_img = read_image(
+        os.path.abspath(os.path.join('images', 'paisagem01.jpg')),
+        results_dir
+    )
 
     logger.info('Segmenting image by color')
-    hsv_segmentation = apply_hsv_segmentation(img, results_dir)
-    rgb_segmentation = apply_rgb_segmentation(img, results_dir)
+    # hsv_segmentation = apply_hsv_segmentation(img, results_dir)
+    # rgb_segmentation = apply_rgb_segmentation(img, results_dir)
+
+    logger.info('Applying chroma key effect')
+    chroma_key = apply_chroma_key(img, background_img, results_dir)
