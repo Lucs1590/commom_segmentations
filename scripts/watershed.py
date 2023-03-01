@@ -61,6 +61,44 @@ def fill_holes(image: np.ndarray, thresh=1000) -> np.ndarray:
     return image
 
 
+def apply_id_and_label(results_dir, gray, labels, labeled_image):
+    for label in np.unique(labels):
+        if label == 0:
+            continue
+        mask = np.zeros(gray.shape, dtype='uint8')
+        mask[labels == label] = 255
+        ctns = cv2.findContours(
+            mask.copy(),
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_NONE
+        )[-2]
+        c = max(ctns, key=cv2.contourArea)
+        ((x, y), r) = cv2.minEnclosingCircle(c)
+        cv2.putText(
+            labeled_image,
+            '#{}'.format(label),
+            (int(x) - 10, int(y)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            (255, 255, 250),
+            2
+        )
+        cv2.imwrite(
+            os.path.join(results_dir, 'labeled_overlayed_image.png'),
+            labeled_image
+        )
+
+def apply_overlay(results_dir, img, labels):
+    normalize = plt.Normalize(labels.min(), labels.max())
+    seg_watershed = plt.cm.jet(normalize(labels))
+
+    seg_watershed = (seg_watershed * 255).astype(np.uint8)
+    seg_watershed = cv2.cvtColor(seg_watershed, cv2.COLOR_RGB2BGR)
+
+    overlay = cv2.addWeighted(img, 0.5, seg_watershed, 0.5, 0)
+    cv2.imwrite(os.path.join(results_dir, 'overlay_watershed.png'), overlay)
+    return overlay
+
 if __name__ == '__main__':
     results_dir = 'results'
     image_path = os.path.abspath(os.path.join('images', 'rbc.jpg'))
@@ -112,3 +150,9 @@ if __name__ == '__main__':
     plot = plt.imshow(labels, cmap='jet')
     plt.colorbar(plot)
     plt.savefig(os.path.join(results_dir, 'labels_watershed.png'))
+
+    logger.info('Applying overlay with normalized labels')
+    overlay = apply_overlay(results_dir, img, labels)
+
+    logger.info('Identifying objects and applying labels')
+    apply_id_and_label(results_dir, gray, labels, overlay.copy())
